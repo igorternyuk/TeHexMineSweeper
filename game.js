@@ -4,8 +4,11 @@ var isGamePaused = false;
 var isGameOver = false;
 const ROWS = 10;
 const COLS = 10;
-const TILE_SIZE = 40;
+const MINE_NUMBER = 10;
 var grid;
+var isFirstMove = true;
+var GameState = Object.freeze({ PLAY: 0, VICTORY: 1, DEFEAT: 2 });
+var gameState = GameState.PLAY;
 
 function preload(){
 }
@@ -14,7 +17,6 @@ function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   frameRate(5);
   grid = createGrid(ROWS, COLS);
-  setMines(50);
 }
 
 function createGrid(rows, cols){
@@ -32,17 +34,35 @@ function createGrid(rows, cols){
 
 function setMines(number){
 	for(let i = 0; i < number; ++i){
+		let counter = 0;
 		inner:
-		while(true){
-			randX = floor(random(0,ROWS));
-			randY = floor(random(0,COLS));
-			if(!grid[randY][randX].isMined){
-				grid[randY][randX].isMined = true;
-				break inner;
+		while(counter < 200){
+			randX = floor(random(0,COLS));
+			randY = floor(random(0,ROWS));
+			console.log("randX = ", randX, " randY = ", randY);
+			if(isGridCoordinatesValid(randX, randY)) {
+				first = (grid[randY][randX].state !== CellState.REVEALED);
+				second = !grid[randY][randX].isMined;
+				console.log("first = ", first, " second = ", second);
+				console.log("grid[randY][randX].state = ", grid[randY][randX].state);
+				if((grid[randY][randX].state !== CellState.REVEALED) && !grid[randY][randX].isMined){
+					grid[randY][randX].isMined = true;
+					break inner;
+				}
 			}
+			++counter;
 		}
 	}
 	countMinesAround();
+}
+
+function clearField(){
+	for(let y = 0; y < grid.length; ++y){
+		for(let x = 0; x < grid[y].length; ++x){
+			grid[y][x].state = CellState.CLOSED;
+			grid[y][x].isMined = false;
+		}
+	}
 }
 
 function countMinesAround(){
@@ -61,16 +81,17 @@ function countMinesAround(){
 }
 
 function startNewGame(){
-
+	clearField();
+	gameState = GameState.PLAY;
+	isFirstMove = true;
 }
 
-
-function gameOver(){}
-
-
 function mouseClicked(){
-	console.log("mouseX = ", mouseX, " mouseY = ", mouseY);
-	var clickedRow, clickedCol;
+	//console.log("mouseX = ", mouseX, " mouseY = ", mouseY);
+	if(gameState !== GameState.PLAY){
+		console.log("gameState = ", gameState);
+		return;
+	}
 	mx = floor(mouseX / Cell.DX);
 	my = floor(mouseY / Cell.DY);
 	min_x = mx - 1;
@@ -82,17 +103,43 @@ function mouseClicked(){
 		for(let x = min_x; x <= max_x; ++x){
 			if(isGridCoordinatesValid(x,y) && 
 				grid[y][x].isPointInside(mouseX,mouseY)){
-				clickedRow = y;
-				clickedCol = x;
 				if( mouseButton === LEFT){
-					grid[clickedRow][clickedCol].reveal();
+					reveal(x,y);
+					
 				} else if(mouseButton === CENTER){
-					grid[clickedRow][clickedCol].nextState();
+					grid[y][x].nextState();
 				}
+				break outer;
 			}
 		}
 	}
 
+}
+
+function reveal(x,y){
+	console.log("reveal x = ", x, " y = ", y);
+	if(isGridCoordinatesValid(x,y)){
+		if(grid[y][x].state === CellState.REVEALED){
+			return;
+		}
+		grid[y][x].reveal();
+		if(grid[y][x].isMined){
+			gameState = GameState.DEFEAT;
+			return;
+		}
+		if(isFirstMove){
+			isFirstMove = false;
+			setMines(MINE_NUMBER);
+		}
+		
+		if(grid[y][x].minesAround > 0){
+			return;
+		}
+		neighbours = getNeighbours(x,y);
+		for(let i = 0; i < neighbours.length; ++i){
+			reveal(neighbours[i].x, neighbours[i].y);
+		}
+	}
 }
 
 function getNeighbours(x,y){
@@ -152,21 +199,26 @@ function keyPressed(){
 	}
 }
 
-function update(){
-
-}
-
 function renderScore(){
 
 }
 
 function renderGameStatus(){
-
+	if(gameState === GameState.VICTORY){
+		fill(0,255,0);
+		textSize(64);
+		text("You won!!!", CANVAS_WIDTH / 6, CANVAS_HEIGHT / 2);
+	} else if(gameState === GameState.DEFEAT){
+		fill(255,0,0);
+		textSize(64);
+		text("You lost!!!", CANVAS_WIDTH / 6, CANVAS_HEIGHT / 2);
+	}
 }
 
 function draw() {
 	background(200);
 	drawHexGrid(grid);
+	renderGameStatus();
 }
 
 function drawHexGrid(grid){	

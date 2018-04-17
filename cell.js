@@ -69,9 +69,26 @@ class Cell{
 		}
 	}
 
+	getColorByMineCount(mineCount){
+		switch(mineCount){
+			case 1:
+				return "#9a0606";
+			case 2:
+				return "#ff5079";
+			case 3:
+				return "#723584";
+			case 4:
+				return "#0a8d27";
+			case 5:
+				return "#d2210d";
+			default:
+				return "#c87d5d";
+		}
+	}
+
 	render(){
 		if( this.state === CellState.REVEALED){
-			fill("#fed85f");
+			fill("#f2e2cd");
 		} else {
 			fill("#008080");
 		}
@@ -95,11 +112,11 @@ class Cell{
 			text("?", this.cx - 10, this.cy + 10);
 		} else if( this.state === CellState.REVEALED){
 			if(this.isMined){
-				fill("#66023c");
+				fill("#2f1c26");
 				ellipse(this.cx,this.cy,20);
 			} else {
 				if(this.minesAround > 0){
-					fill(255,0,0);
+					fill(this.getColorByMineCount(this.minesAround));
 					textSize(32)
 					text(this.minesAround, this.cx - 10, this.cy + 10);	
 				}
