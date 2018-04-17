@@ -2,10 +2,6 @@ const CANVAS_WIDTH = 600;
 const CANVAS_HEIGHT = 450;
 var isGamePaused = false;
 var isGameOver = false;
-//const RADIUS = 25;
-//const VERTEX_NUMBER = 6;
-//const DX = 2 * RADIUS * Math.cos(Math.PI / VERTEX_NUMBER);
-//const DY = RADIUS * (1 + Math.sin(Math.PI / VERTEX_NUMBER));
 const ROWS = 10;
 const COLS = 10;
 const TILE_SIZE = 40;
@@ -16,8 +12,9 @@ function preload(){
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
-  frameRate(2);
+  frameRate(5);
   grid = createGrid(ROWS, COLS);
+  setMines(50);
 }
 
 function createGrid(rows, cols){
@@ -33,6 +30,35 @@ function createGrid(rows, cols){
 	return grid;
 }
 
+function setMines(number){
+	for(let i = 0; i < number; ++i){
+		inner:
+		while(true){
+			randX = floor(random(0,ROWS));
+			randY = floor(random(0,COLS));
+			if(!grid[randY][randX].isMined){
+				grid[randY][randX].isMined = true;
+				break inner;
+			}
+		}
+	}
+	countMinesAround();
+}
+
+function countMinesAround(){
+	for(let y = 0; y < grid.length; ++y){
+		for(let x = 0; x < grid[y].length; ++x){
+			neighbours = getNeighbours(x,y);
+			let minesTotal = 0;
+			for(let i = 0; i < neighbours.length; ++i){
+				if(neighbours[i].isMined){
+					++minesTotal;
+				}
+			}
+			grid[y][x].minesAround = minesTotal;
+		}
+	}
+}
 
 function startNewGame(){
 
@@ -43,68 +69,61 @@ function gameOver(){}
 
 
 function mouseClicked(){
-	if( mouseButton === LEFT){
-		console.log("mouseX = ", mouseX, " mouseY = ", mouseY);
-		mx = floor(mouseX / Cell.DX);
-		my = floor(mouseY / Cell.DY);
-		min_x = mx - 1;
-		max_x = mx + 1;
-		min_y = my - 1;
-		max_y = my + 1;		
-		outer:
-		for (let y = min_y; y <= max_y; y++) {
-			for(let x = min_x; x <= max_x; ++x){
-
-				if(isGridCoordinatesValid(x,y) && 
-					grid[y][x].isPointInside(mouseX,mouseY)){
-					grid[y][x].value = 1;
-					heighbours = getNeighbours(x,y);
-					for(let i = 0; i < neighbours.length; ++i){
-						neighbours[i].value = 3;
-					}
-					break outer;
+	console.log("mouseX = ", mouseX, " mouseY = ", mouseY);
+	var clickedRow, clickedCol;
+	mx = floor(mouseX / Cell.DX);
+	my = floor(mouseY / Cell.DY);
+	min_x = mx - 1;
+	max_x = mx + 1;
+	min_y = my - 1;
+	max_y = my + 1;		
+	outer:
+	for (let y = min_y; y <= max_y; y++) {
+		for(let x = min_x; x <= max_x; ++x){
+			if(isGridCoordinatesValid(x,y) && 
+				grid[y][x].isPointInside(mouseX,mouseY)){
+				clickedRow = y;
+				clickedCol = x;
+				if( mouseButton === LEFT){
+					grid[clickedRow][clickedCol].reveal();
+				} else if(mouseButton === CENTER){
+					grid[clickedRow][clickedCol].nextState();
 				}
 			}
 		}
-	} else if(mouseButton === RIGHT){
-
-	} else if(mouseButton === CENTER){
-
 	}
+
 }
 
 function getNeighbours(x,y){
 	neighbours = [];
+	var dx_min, dx_max;
 	if( y % 2 === 0){
-		for(let dy = -1; dy <= 1; ++dy){
-			for(let dx = -1; dx <= 0; ++dx){
-				if(dx === 0 && dy === 0) continue;
-				nx = x + dx;
-				ny = y + dy;
-				if(isGridCoordinatesValid(nx,ny)){
-					neighbours.push(grid[ny][nx]);
-				}
-			}		
-		}
+		dx_min = -1;
+		dx_max = 0;
+	} else {
+		dx_min = 0;
+		dx_max = 1;		
+	}
+	for(let dy = -1; dy <= 1; ++dy){
+		for(let dx = dx_min; dx <= dx_max; ++dx){
+			if(dx === 0 && dy === 0) continue;
+			nx = x + dx;
+			ny = y + dy;
+			if(isGridCoordinatesValid(nx,ny)){
+				neighbours.push(grid[ny][nx]);
+			}
+		}		
+	}
+	if(y % 2 === 0){
 		if(isGridCoordinatesValid(x + 1,y)){
 			neighbours.push(grid[y][x + 1]);
 		}
 	} else {
-		for(let dy = -1; dy <= 1; ++dy){
-			for(let dx = 0; dx <= 1; ++dx){
-				if(dx === 0 && dy === 0) continue;
-				nx = x + dx;
-				ny = y + dy;
-				if(isGridCoordinatesValid(nx,ny)){
-					neighbours.push(grid[ny][nx]);
-				}
-			}		
-		}
 		if(isGridCoordinatesValid(x - 1,y)){
 			neighbours.push(grid[y][x - 1]);
-		}
+		}	
 	}
-	
 	return neighbours;
 }
 
@@ -120,6 +139,13 @@ function isGridCoordinatesValid(row, col){
 
 
 function keyPressed(){
+	if(key === ' '){
+		for(let y = 0; y < grid.length; ++y){
+			for (var x = 0; x < grid[y].length; ++x) {
+				grid[y][x].reveal();
+			}
+		}
+	}
 	switch(key){
 		default:
 			break;
