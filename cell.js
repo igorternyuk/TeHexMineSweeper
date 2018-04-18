@@ -1,17 +1,4 @@
 /*
-my.namespace.ColorEnum = {
-    RED : 0,
-    GREEN : 1,
-    BLUE : 2
-}
-
-// later on
-
-if(currentColor == my.namespace.ColorEnum.RED) {
- 
-
- var DaysEnum = Object.freeze({"monday":1, "tuesday":2, "wednesday":3, ...})
-
  var SIZE = {
   SMALL : {value: 0, name: "Small", code: "S"}, 
   MEDIUM: {value: 1, name: "Medium", code: "M"}, 
@@ -37,6 +24,7 @@ class Cell{
 		this.state = CellState.CLOSED;
 		this.isMined = false;
 		this.minesAround = 0;
+		this.exploded = false;
 	}
 
 	isPointInside(x,y){
@@ -103,17 +91,35 @@ class Cell{
 		endShape(CLOSE);
 		
 		if( this.state === CellState.FLAGGED){
+			fill(255,255,0);
+			//textSize(32);
+			//text("F", this.cx - 10, this.cy + 10);
+			push();
+			translate(this.cx, this.cy);
+			rect(-5, -10, 3, 20);
 			fill(255,0,0);
-			textSize(32);
-			text("F", this.cx - 10, this.cy + 10);
+			triangle(-5, -10, 10, -10, -5, 0);
+			pop();
 		} else if( this.state === CellState.QUESTIONED){
 			fill(255,0,0);
 			textSize(32)
 			text("?", this.cx - 10, this.cy + 10);
 		} else if( this.state === CellState.REVEALED){
 			if(this.isMined){
-				fill("#2f1c26");
-				ellipse(this.cx,this.cy,20);
+				if(this.exploded){
+					fill(255,0,0);
+				} else {
+					fill("#2f1c26");
+				}
+				strokeWeight(0);
+				push();
+				translate(this.cx,this.cy - 2);
+				triangle(0, -10, -12, 10, 12, 10);
+				rotate(PI);
+				translate(0, -6);
+				triangle(0, -10, -12, 10, 12, 10);
+				pop();
+				strokeWeight(1);
 			} else {
 				if(this.minesAround > 0){
 					fill(this.getColorByMineCount(this.minesAround));
