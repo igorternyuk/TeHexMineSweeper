@@ -1,17 +1,3 @@
-/*
- var SIZE = {
-  SMALL : {value: 0, name: "Small", code: "S"}, 
-  MEDIUM: {value: 1, name: "Medium", code: "M"}, 
-  LARGE : {value: 2, name: "Large", code: "L"}
-};
-
-var currentSize = SIZE.MEDIUM;
-if (currentSize == SIZE.MEDIUM) {
-  // this alerts: "1: Medium"
-  alert(currentSize.value + ": " + currentSize.name);
-} 
-*/
-
 var CellState = Object.freeze({ CLOSED: 0, FLAGGED: 1, QUESTIONED: 2, REVEALED: 3 });
 
 class Cell{
@@ -76,9 +62,14 @@ class Cell{
 
 	render(){
 		if( this.state === CellState.REVEALED){
-			fill("#f2e2cd");
+			if(this.exploded){
+				fill(255,0,0);
+			} else {
+				fill("#beeeef");
+			}
+			
 		} else {
-			fill("#008080");
+			fill("#104e8b");
 		}
 
 		beginShape();
@@ -91,7 +82,17 @@ class Cell{
 		endShape(CLOSE);
 		
 		if( this.state === CellState.FLAGGED){
-			fill(255,255,0);
+			if(gameState === GameState.DEFEAT && !this.isMined){
+				image(imageFalseSuggestedMine, this.cx - SCALE_IMAGE * IMAGE_SIZE / 2,
+				 this.cy - SCALE_IMAGE * IMAGE_SIZE / 2, SCALE_IMAGE * IMAGE_SIZE,
+				 SCALE_IMAGE * IMAGE_SIZE, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+			} else {
+				image(imageSuggestMine, this.cx - SCALE_IMAGE * IMAGE_SIZE / 2,
+				 this.cy - SCALE_IMAGE * IMAGE_SIZE / 2, SCALE_IMAGE * IMAGE_SIZE,
+				  SCALE_IMAGE * IMAGE_SIZE, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+			}
+			
+			/*fill(255,255,0);
 			//textSize(32);
 			//text("F", this.cx - 10, this.cy + 10);
 			push();
@@ -99,19 +100,27 @@ class Cell{
 			rect(-5, -10, 3, 20);
 			fill(255,0,0);
 			triangle(-5, -10, 10, -10, -5, 0);
-			pop();
+			pop();*/
 		} else if( this.state === CellState.QUESTIONED){
 			fill(255,0,0);
-			textSize(32)
-			text("?", this.cx - 10, this.cy + 10);
+			textSize(48);
+			text("?", this.cx - 17, this.cy + 17);
 		} else if( this.state === CellState.REVEALED){
 			if(this.isMined){
 				if(this.exploded){
-					fill(255,0,0);
+					//fill(255,0,0);
+					image(imageGameOverMine, this.cx - SCALE_IMAGE * IMAGE_SIZE / 2,
+					 this.cy - SCALE_IMAGE * IMAGE_SIZE / 2, SCALE_IMAGE * IMAGE_SIZE,
+					  SCALE_IMAGE * IMAGE_SIZE, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+
 				} else {
-					fill("#2f1c26");
+					//fill("#2f1c26");
+					image(imageFinishMine, this.cx - SCALE_IMAGE * IMAGE_SIZE / 2,
+					 this.cy - SCALE_IMAGE * IMAGE_SIZE / 2, SCALE_IMAGE * IMAGE_SIZE,
+					  SCALE_IMAGE * IMAGE_SIZE, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
 				}
-				strokeWeight(0);
+
+				/*strokeWeight(0);
 				push();
 				translate(this.cx,this.cy - 2);
 				triangle(0, -10, -12, 10, 12, 10);
@@ -119,12 +128,12 @@ class Cell{
 				translate(0, -6);
 				triangle(0, -10, -12, 10, 12, 10);
 				pop();
-				strokeWeight(1);
+				strokeWeight(1);*/
 			} else {
 				if(this.minesAround > 0){
 					fill(this.getColorByMineCount(this.minesAround));
-					textSize(32)
-					text(this.minesAround, this.cx - 10, this.cy + 10);	
+					textSize(48)
+					text(this.minesAround, this.cx - 17, this.cy + 17);	
 				}
 			}
 		}
@@ -133,6 +142,6 @@ class Cell{
 }
 
 Cell.VERTEX_NUMBER = 6;
-Cell.RADIUS = 25;
+Cell.RADIUS = 40;
 Cell.DX = 2 * Cell.RADIUS * Math.cos(Math.PI / Cell.VERTEX_NUMBER);
 Cell.DY = Cell.RADIUS * (1 + Math.sin(Math.PI / Cell.VERTEX_NUMBER));

@@ -1,15 +1,24 @@
-const CANVAS_WIDTH = 600;
-const CANVAS_HEIGHT = 450;
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 700;
 var isGamePaused = false;
 var isGameOver = false;
 const ROWS = 10;
 const COLS = 10;
 const MINE_NUMBER = 40;
+const IMAGE_SIZE = 82;
+const SCALE_IMAGE = 0.8;
 var grid;
 var isFirstMove = true;
 var flagNumber = 0;
 var GameState = Object.freeze({ PLAY: 0, VICTORY: 1, DEFEAT: 2 });
 var gameState = GameState.PLAY;
+
+function preload(){
+	imageFalseSuggestedMine = loadImage("resources/images/falseSuggestedMine.png");
+	imageFinishMine = loadImage("resources/images/finishMine.png");
+	imageGameOverMine = loadImage("resources/images/gameOverMine.png");
+	imageSuggestMine = loadImage("resources/images/suggestMine.png");
+}
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -66,6 +75,7 @@ function clearField(){
 		for(let x = 0; x < grid[y].length; ++x){
 			grid[y][x].state = CellState.CLOSED;
 			grid[y][x].isMined = false;
+			grid[y][x].exploded = false;
 		}
 	}
 }
